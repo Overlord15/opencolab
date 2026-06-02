@@ -1,0 +1,122 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Pure helper functions (Pillar 3 & 10: Denial of Wallet Guard and ID validation)
+    function isValidId(id) { 
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); 
+    }
+    
+    function incoming() { 
+      return request.resource.data; 
+    }
+    
+    function existing() { 
+      return resource.data; 
+    }
+    
+    function isSignedIn() { 
+      return request.auth != null; 
+    }
+
+    // User Profile Rules
+    match /users/{userId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn() && (resource.data.orgCode == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgCode);
+      allow create: if isSignedIn() && request.auth.uid == userId && isValidUser(incoming());
+      allow update: if isSignedIn() && request.auth.uid == userId && isValidUser(incoming()) && (
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'name', 'avatar', 'bio', 'phone', 'jobTitle', 'orgCode', 'paymentStatus', 'isPremium', 'updatedAt'
+        ])
+      );
+    }
+
+    function isValidUser(data) {
+      return data.email is string && data.email.size() <= 128 &&
+             data.name is string && data.name.size() <= 128 &&
+             (data.orgCode == null || (data.orgCode is string && data.orgCode.size() <= 64)) &&
+             (data.avatar == null || (data.avatar is string && data.avatar.size() <= 1000)) &&
+             (data.bio == null || (data.bio is string && data.bio.size() <= 1000)) &&
+             (data.phone == null || (data.phone is string && data.phone.size() <= 64)) &&
+             (data.jobTitle == null || (data.jobTitle is string && data.jobTitle.size() <= 128)) &&
+             (data.isPremium is bool) &&
+             (data.paymentStatus in ['free', 'paid', 'pending']);
+    }
+
+    // Organization Rules
+    match /organizations/{orgId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && isValidOrg(incoming());
+      allow update: if isSignedIn() && (request.auth.uid in existing().members || request.auth.uid == existing().ownerId) && isValidOrg(incoming());
+    }
+
+    function isValidOrg(data) {
+      return data.orgCode is string && data.orgCode.size() <= 64 &&
+             data.name is string && data.name.size() <= 128 &&
+             data.ownerId is string && data.ownerId.size() <= 128 &&
+             data.members is list;
+    }
+
+    // Task Rules
+    match /tasks/{taskId} {
+      allow read, list: if isSignedIn() && (
+        existing().orgId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgCode
+      );
+      allow create: if isSignedIn() && isValidTask(incoming()) && incoming().createdBy == request.auth.uid;
+      allow update: if isSignedIn() && (
+        existing().createdBy == request.auth.uid || 
+        existing().assigneeId == request.auth.uid
+      ) && isValidTask(incoming());
+      allow delete: if isSignedIn() && existing().createdBy == request.auth.uid;
+    }
+
+    function isValidTask(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.title is string && data.title.size() <= 256 &&
+             data.description is string && data.description.size() <= 10000 &&
+             data.status in ['pending', 'in-progress', 'completed'] &&
+             data.priority in ['low', 'medium', 'high'] &&
+             data.category in ['development', 'design', 'testing', 'documentation'] &&
+             data.createdBy == request.auth.uid &&
+             data.orgId is string && data.orgId.size() <= 128;
+    }
+
+    // Calendar Event Rules
+    match /calendar_events/{eventId} {
+      allow read, list: if isSignedIn() && (
+        existing().orgId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgCode
+      );
+      allow create: if isSignedIn() && isValidEvent(incoming()) && incoming().createdBy == request.auth.uid;
+      allow update: if isSignedIn() && existing().createdBy == request.auth.uid && isValidEvent(incoming());
+      allow delete: if isSignedIn() && existing().createdBy == request.auth.uid;
+    }
+
+    function isValidEvent(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.title is string && data.title.size() <= 256 &&
+             data.description is string && data.description.size() <= 10000 &&
+             data.createdBy == request.auth.uid &&
+             data.orgId is string && data.orgId.size() <= 128;
+    }
+
+    // Direct Messages Channels
+    match /messages/{conversationId} {
+      allow read, list: if isSignedIn() && (request.auth.uid in existing().participants);
+      allow create: if isSignedIn() && isValidMessageChannel(incoming()) && (request.auth.uid in incoming().participants);
+      allow update: if isSignedIn() && (request.auth.uid in existing().participants) && isValidMessageChannel(incoming());
+      allow delete: if false;
+    }
+
+    function isValidMessageChannel(data) {
+      return data.id is string && data.id.size() <= 128 &&
+             data.participants is list && data.participants.size() >= 1 &&
+             data.messages is list;
+    }
+  }
+}

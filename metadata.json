@@ -1,0 +1,6 @@
+{
+  "name": "OpenColab",
+  "description": "A collaborative workspace for task management, group scheduling, messages with team members, and whiteboard brainstorming.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

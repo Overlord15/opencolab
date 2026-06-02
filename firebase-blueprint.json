@@ -1,0 +1,115 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Represents a user profile on OpenColab.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "name": { "type": "string" },
+        "orgCode": { "type": "string" },
+        "avatar": { "type": "string" },
+        "bio": { "type": "string" },
+        "phone": { "type": "string" },
+        "jobTitle": { "type": "string" },
+        "isPremium": { "type": "boolean" },
+        "paymentStatus": { "type": "string", "enum": ["free", "paid", "pending"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "name", "createdAt", "updatedAt"]
+    },
+    "Organization": {
+      "title": "Organization",
+      "description": "Represents an workspace organization containing multiple team members.",
+      "type": "object",
+      "properties": {
+        "orgCode": { "type": "string" },
+        "name": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "members": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orgCode", "name", "ownerId", "members", "createdAt"]
+    },
+    "Task": {
+      "title": "Task",
+      "description": "Represents a shared task inside an organization workspace.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "in-progress", "completed"] },
+        "priority": { "type": "string", "enum": ["low", "medium", "high"] },
+        "category": { "type": "string", "enum": ["development", "design", "testing", "documentation"] },
+        "assigneeId": { "type": "string" },
+        "assigneeName": { "type": "string" },
+        "assigneeAvatar": { "type": "string" },
+        "createdBy": { "type": "string" },
+        "dueDate": { "type": "string" },
+        "orgId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "title", "status", "priority", "category", "createdBy", "orgId", "createdAt", "updatedAt"]
+    },
+    "CalendarEvent": {
+      "title": "CalendarEvent",
+      "description": "Represents a team calendar meeting, deadline, or review event.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "date": { "type": "string" },
+        "time": { "type": "string" },
+        "endTime": { "type": "string" },
+        "type": { "type": "string", "enum": ["meeting", "deadline", "review", "other"] },
+        "priority": { "type": "string", "enum": ["low", "medium", "high"] },
+        "createdBy": { "type": "string" },
+        "attendees": { "type": "array" },
+        "orgId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "title", "date", "time", "type", "priority", "createdBy", "attendees", "orgId", "createdAt", "updatedAt"]
+    },
+    "MessageChannel": {
+      "title": "MessageChannel",
+      "description": "Represents a direct messaging channel or conversation thread between user participants.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "participants": { "type": "array" },
+        "orgId": { "type": "string" },
+        "messages": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "participants", "orgId", "messages", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": { "$ref": "User" },
+      "description": "Main user records including profile information and premium details."
+    },
+    "organizations/{orgId}": {
+      "schema": { "$ref": "Organization" },
+      "description": "The workspace groupings where members are pooled under unique organization codes."
+    },
+    "tasks/{taskId}": {
+      "schema": { "$ref": "Task" },
+      "description": "Workspace-wide tasks visible to all organization members and manageable based on owner roles."
+    },
+    "calendar_events/{eventId}": {
+      "schema": { "$ref": "CalendarEvent" },
+      "description": "Workspace-wide scheduled events for the central organization stream."
+    },
+    "messages/{conversationId}": {
+      "schema": { "$ref": "MessageChannel" },
+      "description": "Direct chat logs and thread logs syncable in real-time."
+    }
+  }
+}
