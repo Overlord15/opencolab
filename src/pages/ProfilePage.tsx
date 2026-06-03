@@ -16,7 +16,11 @@ import {
   Sparkles
 } from "lucide-react";
 
-export default function ProfilePage() {
+interface ProfilePageProps {
+  onNavigate: (view: string) => void;
+}
+
+export default function ProfilePage({ onNavigate }: ProfilePageProps) {
   const { 
     profile, 
     organization, 
@@ -266,10 +270,10 @@ export default function ProfilePage() {
                   {!showCheckout ? (
                     <button
                       id="btn-upgrade-view"
-                      onClick={() => setShowCheckout(true)}
+                      onClick={() => onNavigate("subscription")}
                       className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded transition-all shadow-md shadow-blue-100 flex items-center justify-center gap-1.5 cursor-pointer"
                     >
-                      <Zap className="h-3.5 w-3.5" /> Upgrade Workspace -$10/mo
+                      <Zap className="h-3.5 w-3.5" /> Upgrade Workspace — ₹499/mo
                     </button>
                   ) : (
                     <form onSubmit={handleCheckout} className="space-y-3 pt-3 border-t border-slate-200 animate-in slide-in-from-top duration-200">
@@ -351,7 +355,7 @@ export default function ProfilePage() {
                         <FileText className="h-3.5 w-3.5 text-blue-500" />
                         <span>INV-OCO-0021</span>
                       </div>
-                      <span className="font-semibold text-slate-800">$10.00 PAID</span>
+                      <span className="font-semibold text-slate-800">₹499.00 PAID</span>
                     </div>
                   </div>
                 </div>

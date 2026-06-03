@@ -8,6 +8,7 @@ import CalendarPage from "./pages/CalendarPage";
 import ChatPage from "./pages/ChatPage";
 import WhiteboardPage from "./pages/WhiteboardPage";
 import ProfilePage from "./pages/ProfilePage";
+import SubscriptionPage from "./pages/SubscriptionPage";
 
 import { Zap } from "lucide-react";
 
@@ -46,7 +47,9 @@ function MainAppContent() {
       case "whiteboard":
         return <WhiteboardPage />;
       case "profile":
-        return <ProfilePage />;
+        return <ProfilePage onNavigate={setActiveView} />;
+      case "subscription":
+        return <SubscriptionPage onNavigate={setActiveView} />;
       default:
         return <Dashboard onNavigate={setActiveView} />;
     }
